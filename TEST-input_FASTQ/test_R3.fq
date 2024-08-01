@@ -1,0 +1,16 @@
+@testR3_1
+TTT 
++
+passphred 
+@testR3_2
+TTT
++
+passphred
+@testR3_3
+TNC 
++
+passphred 
+@testR3_4
+CCC 
++
+failphred 
