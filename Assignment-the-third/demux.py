@@ -5,10 +5,10 @@ barcodes_path = "/projects/bgmp/shared/2017_sequencing/indexes.txt"
 
 #ADD LATER:
 
-R1 = "/projects/bgmp/shared/2017_sequencing/1294_S1_L008_R1_001.fastq.gz"
-R2 = "/projects/bgmp/shared/2017_sequencing/1294_S1_L008_R2_001.fastq.gz"
-R3 = "/projects/bgmp/shared/2017_sequencing/1294_S1_L008_R3_001.fastq.gz"
-R4 = "/projects/bgmp/shared/2017_sequencing/1294_S1_L008_R4_001.fastq.gz"
+R1 = "R1_test.fq.gz" #"/projects/bgmp/shared/2017_sequencing/1294_S1_L008_R1_001.fastq.gz" 
+R2 = "R2_test.fq.gz" #"/projects/bgmp/shared/2017_sequencing/1294_S1_L008_R2_001.fastq.gz"
+R3 = "R3_test.fq.gz" #"/projects/bgmp/shared/2017_sequencing/1294_S1_L008_R3_001.fastq.gz"
+R4 = "R4_test.fq.gz" #"/projects/bgmp/shared/2017_sequencing/1294_S1_L008_R4_001.fastq.gz"
 
 
 
@@ -18,8 +18,8 @@ import bioinfo
 
 #Establish Dictionary
 bases = {"A":"T", 
-         "C":"G",
-         "T":"A",
+         "C":"G", 
+         "T":"A", 
          "G":"C",
          "N":"N"}
 
@@ -49,15 +49,16 @@ known_indexes = set() #establish an empty set
 with open(barcodes_path,"r") as fh:
     next(fh)
     for line in fh: 
-        new_line = line.strip.split("\t") #strips the new line, splits by tab
+        new_line = line.strip().split("\t") #strips the new line, splits by tab
         known_indexes.add(new_line[4])
+#print(line)
 
 
 #Open all the files, use the R1 file handles 
-R1_fh = gzip.open(R1, "r") #change the R1-R4 variables to be adapted to argparse
-R2_fh = gzip.open(R2, "r")
-R3_fh = gzip.open(R3, "r")
-R4_fh = gzip.open(R4, "r")
+R1_fh = gzip.open(R1, "rt") #change the R1-R4 variables to be adapted to argparse
+R2_fh = gzip.open(R2, "rt")
+R3_fh = gzip.open(R3, "rt")
+R4_fh = gzip.open(R4, "rt")
 
 
 def open_files():
@@ -76,57 +77,60 @@ def open_files():
 all_files = open_files()
 #Isolate the Sequence Line in all the Files 
 #ISOLATE ALL RECORDS 
-i = 0
-record_4_lines_R1= ""
-record_4_lines_R4 = ""
+record_4_lines_R1= "" #empty string where we append every record from R1 in to 
+record_4_lines_R4 = ""  #empty string where we append every record from R4 in to 
 counter=0 #to keep track of the lines to write into a file
-i=0
+i=0 #to count the line number
 for line_R1,line_R2,line_R3,line_R4 in zip(R1_fh, R2_fh, R3_fh, R4_fh):
-    i+=1
-    line_R1 = line.strip('\n')
-    line_R2 = line.strip('\n')
-    line_R3 = line.strip('\n')
-    line_R4 = line.strip('\n')
+    i+=1 #ensure that modulus works later on 
+    line_R1 = line_R1.strip('\n') #literally stripping the new line 
+    line_R2 = line_R2.strip('\n')
+    line_R3 = line_R3.strip('\n')
+    line_R4 = line_R4.strip('\n')
+    print(i)
+    if i%4==2: #Sequence Line
+        index1 = line_R2
+        index2 = line_R3
+    if i%4==0: #pulling phred score 
+        phred1= line_R2
+        phred2 = line_R3
     if counter<4: #Because the record is 4 lines, if less than 4 we know that it is still the record
-        record_4_lines_R1 += line_R1 + "/n" #we append the line
-        record_4_lines_R4 += line_R4 + "/n"
-
-        counter+=1
+        record_4_lines_R1 += line_R1 + "\n" #we append the line to make a full record 
+        record_4_lines_R4 += line_R4 + "\n"
+        counter+=1  
         if counter==4: 
             counter=0 #reset everything
             rev_index2 = rev_comp(index2)
             add_to_header = str(index1) +  "-" + rev_index2
+            new_head_R1 = record_4_lines_R1.split('\n')[0]+' '+ add_to_header
+            new_head_R4 = record_4_lines_R4.split('\n')[0]+' '+ add_to_header
+            record_4_lines_R1 = record_4_lines_R1.replace(record_4_lines_R1[0],new_head_R1)
+            record_4_lines_R4 = record_4_lines_R1.replace(record_4_lines_R4[0],new_head_R4)  
 #ADDING HEADERS:
-
-
-
-
             # record_copy_R1 = record_4_lines_R1 
             # record_copy_R4 = record_4_lines_R4
-        
-    
             #THIS ELIMINATES UNKNOWNS
-            if bioinfo.qual_score(phred1) < 26 or bioinfo.qual_score(phred2) < 26 or index1 not in known_indexes or rev_index2 not in known_indexes #looks at qscore of index files ONLY 
+            if bioinfo.qual_score(phred1) < 26 or bioinfo.qual_score(phred2) < 26 or index1 not in known_indexes or rev_index2 not in known_indexes: #looks at qscore of index files ONLY:
                 all_files["outfiles/unk_R1.fq"].write(record_4_lines_R1) 
                 all_files["outfiles/unk_R2.fq"].write(record_4_lines_R4)
             elif index1 != rev_index2:
                 all_files["outfiles/hopped_R1.fq"].write(record_4_lines_R1)
                 all_files["outfiles/hopped_R2.fq"].write(record_4_lines_R4)
+            #EVERYTHING THAT WAS MATCHED
             else: 
-                all_files[f'{index1}+"R1"'].write(record_4_lines_R1) #VALUE IS IMPORTANT, KEY DOESN'T MATTER 
-                all_files[f'{index1}+"R4"'].write(record_4_lines_R4)
+                all_files[f'{index1}R1'].write(record_4_lines_R1) #VALUE IS IMPORTANT, KEY DOESN'T MATTER 
+                all_files[f'{index1}R4'].write(record_4_lines_R4)
                 
             record_4_lines_R1=""
             record_4_lines_R4 = ""
     
-                #print("record_copy")
-        if i%4==2: #Sequence Line
-            index1 = line_R2
-            index2 = line_R3
-    
-    if i%4==4: #pulling phred score 
-         phred1= line_R2
-         phred2 = line_R3
+    #             #print("record_copy")
+    # if i%4==2: #Sequence Line
+    #     index1 = line_R2
+    #     index2 = line_R3
+    # if i%4==0: #pulling phred score 
+    #     phred1= line_R2
+    #     phred2 = line_R3
          
 
          
