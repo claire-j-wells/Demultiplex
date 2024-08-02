@@ -5,6 +5,8 @@
 
 https://github.com/claire-j-wells/Demultiplex/blob/master/Assignment-the-first/avg_qual.py
 
+Link to Notebook: https://github.com/claire-j-wells/Demultiplex/blob/master/Lab_Notebook_Depmultiplex.md
+
 | File name | label | Read length | Phred encoding |
 |---|---|---|---|
 | 1294_S1_L008_R1_001.fastq.gz | read 1 | 101 | phred+33 |
