@@ -21,10 +21,12 @@ https://github.com/claire-j-wells/Demultiplex/blob/master/Assignment-the-first/a
 | ![alt text](Histograms/Read_3.png)| ![alt text](Histograms/Read_4.png) | 
 
 
-2. For biological read pairs, we don't necessarily need to assign a quality score cutoff because following this process we will be doing alignment and the alignment algorithm takes care of sequences that don't have a good enough quality score. Therefore, we could assign the quality score cutoff for sequences to be less strict, but we could assign it to be 30 based on the average quality score graph. For the index reads, we would assign an quality score cutoff to be 30 based on the Illumina suggestion. We can also justify this cutoff based on the index graphs. We chose 30 because if the quality score cutoff is too low, we are increasing the chances of introducing low quality bases that could be a false sample assignment. Additionally, according to Illlumina, a phred score of Q30 gives a 99.9% base call accuracy which is sufficient in this context. 
+2. What is a good quality score cutoff for index reads and biological read pairs to utilize for sample identification and downstream analysis, respectively? Justify your answer.
 
-    
-    3. 
+A good quality score cutoff for index reads is an average of 26. For this problem we need to look at the quality of the index in specific since we are sorting reads by matches, hopped, or unknown. Quality score matters for indexes specifically because we don't want to have bases in the index that would result in the "conversion" to another index. We want to maintain a high enough average quality score for the indexes so we know that the indexes are actually matched, hopped or unknown. Based on Illumina's website, a quality score of 20 has a 99% accuracy rate. Although most of the reads have an average quality score of around 30, we chose 26 because 26 will fall in Illumina's 25-29 bin which will ensure that we aren't unneceesarily losing any indices. For the biological reads, we do not need to assign a quality score cutoff because quality of reads is dealt with downstream during the alignment process. We could arbitrarily assign 26 as well, but this quality score is less important. 
+
+ 
+3. How many indexes have undetermined (N) base calls? (Utilize your command line tool knowledge. Submit the command(s) you used. CHALLENGE: use a one-line command)
     ```
     Index 1:
     zcat 1294_S1_L008_R2_001.fastq.gz | sed -n '2~4p'| grep -c 'N'
@@ -41,6 +43,7 @@ https://github.com/claire-j-wells/Demultiplex/blob/master/Assignment-the-first/a
   
 ## Part 2
 1. Define the problem
+
 There are a few problems. We are given four fastq files (R1,R2,R3,R4). R1 and R4 are Read 1 and Read 2 and R2 and R3 are Index 1 and Index 2 respectively. These indexes are used to match the reads in each sample. We are also given a list of 24 indexes that are known and used to generate the RNA sequence data. 
 
 The end goal of this is to demultiplex the data. This means we need to get the reads from R1 and R4 and get those reads into their own designated files labeled by matching index (ex: AAAA-AAAA_R2.fq). R1 will go into an index_R1.fq file, this will be a collection of records from R1 only and R2 will go into another seperate file of index_R2.fq. There will be 24 different files times 2 because there is both R1 and R4 files to parse through for a total of 48 files. 
@@ -170,4 +173,37 @@ return(qual_score)
     2. Function headers (name and parameters)
     3. Test examples for individual functions
     4. Return statement
-See functions above!
+
+
+```
+def rev_comp(seq:str)--> str:
+'''This function takes in a string and returns a reverse complemented string of DNA. Don't forget to add a dictionary if you don't have one!'''
+        rev_comp = ""
+        seq = seq.strip()
+        for nuc in seq: #need add new line to match input
+            rev_comp += bases[nuc]
+        rev_comp = rev_comp[::-1] 
+        return(rev_comp)
+```
+input:  ATCGC
+output: GCGAT
+
+```
+def open_files():
+'''Use this function to open all of your files using a dictionary. File path is key and value is writing to the file'''
+    all_files = {}
+    for barcodes in known_indexes:
+          file_1 = f'outfiles/{barcodes}-{barcodes}_R1.fq' #KEY IS PATH TO WHERE SHIT GOES 
+          file_2 = f'outfiles/{barcodes}-{barcodes}_R2.fq'
+          all_files[barcodes+"R1"] = open(file_1,"w") #VALUE IS IMPORTANT, KEY DOESN'T MATTER 
+          all_files[barcodes+"R4"] = open(file_2,"w") #VALUE ALLOWS US TO WRITE TO THIS PATH
+    all_files["outfiles/unk_R1.fq"] = open("outfiles/unk_R1.fq","w") #HARDCODED FOR UNK AND HOPPED 
+    all_files["outfiles/unk_R2.fq"] = open("outfiles/unk_R2.fq","w")
+    all_files["outfiles/hopped_R1.fq"] = open("outfiles/hopped_R1.fq","w")
+    all_files["outfiles/hopped_R2.fq"] = open("outfiles/hopped_R2.fq","w")
+    return(all_files)
+```
+input: <br>
+output: all the files 
+
+
