@@ -2,6 +2,29 @@
 
 barcodes_path = "/projects/bgmp/shared/2017_sequencing/indexes.txt"
 
+import gzip
+import bioinfo
+import itertools
+import argparse
+
+def get_args():
+    parser = argparse.ArgumentParser(description="A program to introduce yourself")
+    parser.add_argument("-R1", help = "Read 1: Biological Read", required = True)
+    parser.add_argument("-R2", help = "Read 2: Index 1", required = True)
+    parser.add_argument("-R3", help = "Read 3: Index 2", required = True)
+    parser.add_argument("-R4", help = "Read 4: Biological Read", required = True)
+    parser.add_argument("-index", help = "Known Indexes", required = True)
+    return parser.parse_args()
+
+
+
+args = get_args()
+R1 = args.r1
+R2 = args.r2
+R3 = args.r3
+R4 = args.r4
+index = args.index
+
 
 #ADD LATER:
 
@@ -12,9 +35,8 @@ R4 = "R4_test.fq.gz" #"/projects/bgmp/shared/2017_sequencing/1294_S1_L008_R4_001
 
 
 
-#import numpy as np
-import gzip
-import bioinfo
+
+
 
 #Establish Dictionary
 bases = {"A":"T", 
@@ -77,8 +99,8 @@ def open_files():
 all_files = open_files()
 #Isolate the Sequence Line in all the Files 
 #ISOLATE ALL RECORDS 
-record_4_lines_R1= "" #empty string where we append every record from R1 in to 
-record_4_lines_R4 = ""  #empty string where we append every record from R4 in to 
+record_4_lines_R1= [] #empty string where we append every record from R1 in to 
+record_4_lines_R4 = []  #empty string where we append every record from R4 in to 
 counter=0 #to keep track of the lines to write into a file
 i=0 #to count the line number
 for line_R1,line_R2,line_R3,line_R4 in zip(R1_fh, R2_fh, R3_fh, R4_fh):
@@ -87,7 +109,7 @@ for line_R1,line_R2,line_R3,line_R4 in zip(R1_fh, R2_fh, R3_fh, R4_fh):
     line_R2 = line_R2.strip('\n')
     line_R3 = line_R3.strip('\n')
     line_R4 = line_R4.strip('\n')
-    print(i)
+    #print(i)
     if i%4==2: #Sequence Line
         index1 = line_R2
         index2 = line_R3
@@ -95,34 +117,34 @@ for line_R1,line_R2,line_R3,line_R4 in zip(R1_fh, R2_fh, R3_fh, R4_fh):
         phred1= line_R2
         phred2 = line_R3
     if counter<4: #Because the record is 4 lines, if less than 4 we know that it is still the record
-        record_4_lines_R1 += line_R1 + "\n" #we append the line to make a full record 
-        record_4_lines_R4 += line_R4 + "\n"
+        record_4_lines_R1.append(line_R1) #we append the line to make a full record 
+        record_4_lines_R4.append(line_R4)
         counter+=1  
         if counter==4: 
             counter=0 #reset everything
             rev_index2 = rev_comp(index2)
             add_to_header = str(index1) +  "-" + rev_index2
-            new_head_R1 = record_4_lines_R1.split('\n')[0]+' '+ add_to_header
-            new_head_R4 = record_4_lines_R4.split('\n')[0]+' '+ add_to_header
-            record_4_lines_R1 = record_4_lines_R1.replace(record_4_lines_R1[0],new_head_R1)
-            record_4_lines_R4 = record_4_lines_R1.replace(record_4_lines_R4[0],new_head_R4)  
+            new_head_R1 = record_4_lines_R1[0]+' '+ add_to_header
+            new_head_R4 = record_4_lines_R4[0]+' '+ add_to_header
+            record_4_lines_R1[0] = new_head_R1
+            record_4_lines_R4[0] = new_head_R1
 #ADDING HEADERS:
             # record_copy_R1 = record_4_lines_R1 
             # record_copy_R4 = record_4_lines_R4
             #THIS ELIMINATES UNKNOWNS
             if bioinfo.qual_score(phred1) < 26 or bioinfo.qual_score(phred2) < 26 or index1 not in known_indexes or rev_index2 not in known_indexes: #looks at qscore of index files ONLY:
-                all_files["outfiles/unk_R1.fq"].write(record_4_lines_R1) 
-                all_files["outfiles/unk_R2.fq"].write(record_4_lines_R4)
+                all_files["outfiles/unk_R1.fq"].write(f'{record_4_lines_R1[0]}\n{record_4_lines_R1[1]}\n{record_4_lines_R1[2]}\n{record_4_lines_R1[3]}\n') 
+                all_files["outfiles/unk_R2.fq"].write(f'{record_4_lines_R4[0]}\n{record_4_lines_R4[1]}\n{record_4_lines_R4[2]}\n{record_4_lines_R4[3]}\n')
             elif index1 != rev_index2:
-                all_files["outfiles/hopped_R1.fq"].write(record_4_lines_R1)
-                all_files["outfiles/hopped_R2.fq"].write(record_4_lines_R4)
+                all_files["outfiles/hopped_R1.fq"].write(f'{record_4_lines_R1[0]}\n{record_4_lines_R1[1]}\n{record_4_lines_R1[2]}\n{record_4_lines_R1[3]}\n')
+                all_files["outfiles/hopped_R2.fq"].write(f'{record_4_lines_R4[0]}\n{record_4_lines_R4[1]}\n{record_4_lines_R4[2]}\n{record_4_lines_R4[3]}\n')
             #EVERYTHING THAT WAS MATCHED
             else: 
-                all_files[f'{index1}R1'].write(record_4_lines_R1) #VALUE IS IMPORTANT, KEY DOESN'T MATTER 
-                all_files[f'{index1}R4'].write(record_4_lines_R4)
+                all_files[f'{index1}R1'].write(f'{record_4_lines_R1[0]}\n{record_4_lines_R1[1]}\n{record_4_lines_R1[2]}\n{record_4_lines_R1[3]}\n') #VALUE IS IMPORTANT, KEY DOESN'T MATTER 
+                all_files[f'{index1}R4'].write(f'{record_4_lines_R4[0]}\n{record_4_lines_R4[1]}\n{record_4_lines_R4[2]}\n{record_4_lines_R4[3]}\n')
                 
-            record_4_lines_R1=""
-            record_4_lines_R4 = ""
+            record_4_lines_R1=[]
+            record_4_lines_R4 = []
     
     #             #print("record_copy")
     # if i%4==2: #Sequence Line
@@ -150,8 +172,9 @@ for line_R1,line_R2,line_R3,line_R4 in zip(R1_fh, R2_fh, R3_fh, R4_fh):
 #Write Function that Adds the Reverse Complement to the Header 
 
 
-
-
+permut = list(itertools.product(['A', 'C', 'T','G'], repeat=8)) #gives us the number of possible ACTG index combinations, set to 8 bc indexes are 8 char
+print(len(permut))
+# permut = ', '.join([' '.join(sub) for sub in permut]) #should make this into a string
 
 
 all_files=open_files()
