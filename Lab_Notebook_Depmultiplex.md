@@ -146,7 +146,7 @@ output_fig.png (This is an output graph visualizing the percent of mapped reads 
 matched_stats.tsv (This is a tsv file that has the matched index, the raw counts for records and the actual percent)
 output.txt (This text file has a summary of stats)
 
-
+```
 Conda Environment Information:
 # packages in environment at /projects/bgmp/cwell/miniforge3/envs/bgmp_py312:
 #
@@ -300,5 +300,5 @@ xorg-xproto               7.0.31            h7f98852_1007    conda-forge
 xz                        5.2.6                h166bdaf_0    conda-forge
 zlib                      1.3.1                h4ab18f5_1    conda-forge
 zstd                      1.5.6                ha6fb4c9_0    conda-forge
-
+```
 
