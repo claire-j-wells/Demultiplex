@@ -160,7 +160,7 @@ for key in index_dict:
 all_percentages = [] #store list of matched percentages as a list outside the loop
 matched_indexes = [] #store a list of matching indexes for graph
 total_counts = [] #store a list of total raw individual counts outside loop
-with open("output.txt", "w") as out:
+with open("outputs/output.txt", "w") as out:
     new_tot_unk = 100*tot_unknown/total_records #math for totals 
     new_tot_matched = 100*tot_matched/total_records #math for totals
     new_tot_hopped = 100*tot_hopped/total_records #math for totals
@@ -181,7 +181,7 @@ with open("output.txt", "w") as out:
             out.write(f'The percent of mapped reads for {keys[0]}-{keys[1]} is: {percent}% ({index_dict[keys]})\n')
 
 #WRITE TO TSV FILE 
-with open("matched_stats.tsv", "w") as matched:
+with open("outputs/matched_stats.tsv", "w") as matched:
     matched.write(f'Index\tBarcodes\tTotal Counts\tPercent Mapped\n')
     for i, values in enumerate(matched_indexes):
         matched.write(f'{i}\t{matched_indexes[i]}\t{total_counts[i]}\t{all_percentages[i]}%\n')
@@ -196,7 +196,7 @@ plt.xlabel('Percent Mapped')
 plt.ylabel('Indexes')
 plt.title("Percent Mapped Reads for Matched Indexes")
 plt.tight_layout() #fixes axis cut off 
-plt.savefig("output_fig.png")
+plt.savefig("outputs/output_fig.png")
 
 
 
